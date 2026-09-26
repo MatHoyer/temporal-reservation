@@ -1,0 +1,124 @@
+:root {
+  font-family: system-ui, -apple-system, sans-serif;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #f4f4f5;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+}
+
+h1 {
+  margin: 0 0 20px;
+  font-size: 1.4rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+input {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.error {
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.reservation-id {
+  font-size: 0.8rem;
+  color: #666;
+  word-break: break-all;
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.steps li {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f1f1f1;
+  color: #888;
+}
+
+.steps li.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.steps li.done {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.pay-box {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 6px;
+  background: #eff6ff;
+}
+
+.pay-box p {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: #1e3a8a;
+}
+
+.confirmation {
+  margin-top: 14px;
+  font-weight: 600;
+  color: #15803d;
+}

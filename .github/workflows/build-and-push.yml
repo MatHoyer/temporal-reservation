@@ -1,0 +1,98 @@
+name: Build and push images
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      api_build: ${{ steps.compute.outputs.api_build }}
+      api_version: ${{ steps.compute.outputs.api_version }}
+      worker_build: ${{ steps.compute.outputs.worker_build }}
+      worker_version: ${{ steps.compute.outputs.worker_version }}
+      image_owner: ${{ steps.compute.outputs.image_owner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: compute
+        run: |
+          set -euo pipefail
+          echo "image_owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || ! git rev-parse --verify "$BEFORE" >/dev/null 2>&1; then
+            BEFORE=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+          fi
+
+          shared_changed() {
+            ! git diff --quiet "$BEFORE" HEAD -- internal/ go.mod go.sum
+          }
+
+          api_version=$(cat cmd/api/VERSION)
+          api_old_version=$(git show "$BEFORE:cmd/api/VERSION" 2>/dev/null || echo "")
+          api_src_changed=false
+          if ! git diff --quiet "$BEFORE" HEAD -- cmd/api/ web/ || shared_changed; then
+            api_src_changed=true
+          fi
+          api_build=false
+          if [ "$api_src_changed" = true ] && [ "$api_old_version" != "$api_version" ]; then
+            api_build=true
+          fi
+          echo "api_build=$api_build" >> "$GITHUB_OUTPUT"
+          echo "api_version=$api_version" >> "$GITHUB_OUTPUT"
+
+          worker_version=$(cat cmd/worker/VERSION)
+          worker_old_version=$(git show "$BEFORE:cmd/worker/VERSION" 2>/dev/null || echo "")
+          worker_src_changed=false
+          if ! git diff --quiet "$BEFORE" HEAD -- cmd/worker/ || shared_changed; then
+            worker_src_changed=true
+          fi
+          worker_build=false
+          if [ "$worker_src_changed" = true ] && [ "$worker_old_version" != "$worker_version" ]; then
+            worker_build=true
+          fi
+          echo "worker_build=$worker_build" >> "$GITHUB_OUTPUT"
+          echo "worker_version=$worker_version" >> "$GITHUB_OUTPUT"
+
+  build-api:
+    needs: detect
+    if: needs.detect.outputs.api_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: api.Dockerfile
+          push: true
+          tags: ghcr.io/${{ needs.detect.outputs.image_owner }}/temporal-reservation/api:${{ needs.detect.outputs.api_version }}
+
+  build-worker:
+    needs: detect
+    if: needs.detect.outputs.worker_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: worker.Dockerfile
+          push: true
+          tags: ghcr.io/${{ needs.detect.outputs.image_owner }}/temporal-reservation/worker:${{ needs.detect.outputs.worker_version }}

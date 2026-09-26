@@ -1,0 +1,4 @@
+Build output from web/ lands here (via `make web-build` or the api.Dockerfile
+build stage) and is embedded into the api binary at compile time. This file
+only exists so the directory is non-empty and `go:embed` succeeds before the
+frontend has been built.
